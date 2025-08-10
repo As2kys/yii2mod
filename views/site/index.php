@@ -1,53 +1,79 @@
 <?php
 
+use yii\helpers\Html;
+use yii\widgets\LinkPager;
+use yii\widgets\Pjax;
+
 /** @var yii\web\View $this */
 
-$this->title = 'My Yii Application';
+$this->title = 'Модимир тест';
+$this->registerCss('
+    thead td { border-bottom: 1px solid #ccc; }
+    .pagination a {
+        color: #000;
+        background: #ccc; border: 1px solid #ccc; border-radius: 10px;
+        display: inline-block; margin: 0 10px; padding: 2px 10px 4px;
+        text-decoration: none;
+    }
+    .pages-nav { margin: 20px 0 10px }
+    .pagination li.active a { background: #fff; text-decoration: none }
+');
 ?>
 <div class="site-index">
-
-    <div class="jumbotron text-center bg-transparent mt-5 mb-5">
-        <h1 class="display-4">Congratulations!</h1>
-
-        <p class="lead">You have successfully created your Yii-powered application.</p>
-
-        <p><a class="btn btn-lg btn-success" href="https://www.yiiframework.com">Get started with Yii</a></p>
-    </div>
-
     <div class="body-content">
-
         <div class="row">
-            <div class="col-lg-4 mb-3">
-                <h2>Heading</h2>
-
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
-                    dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-                    ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                    fugiat nulla pariatur.</p>
-
-                <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/doc/">Yii Documentation &raquo;</a></p>
+            <?php
+                foreach ($datesCount as $dateCount) {
+                    echo '&nbsp; ', $dateCount['date'], ': &ndash; ', $dateCount['count'], ' &nbsp; ';
+                }
+            ?></p>
+            <div class="text-center" style="border: 1px solid #000; max-width: 600px; margin: 10px 0; padding: 10px;">
+                график <?= date('H:i:s') ?>
             </div>
-            <div class="col-lg-4 mb-3">
-                <h2>Heading</h2>
+            <table>
+                <thead>
+                    <td>Дата / время</td>
+                    <td>IP</td>
+                    <td>OC</td>
+                    <td>Браузер / User agent <i>(полное название при наведении)</i></td>
+                </thead>
+                <tbody>
+                <?php
+                    if (!count($rows)) {
+                        echo "<p>Empty log, run nginx/import?</p>\n";
+                    }
+                    else foreach ($rows as $row) {
+                        echo '<tr>',
+                            '<td>', substr($row['datetime'], 0, 17), '</td>',
+                            '<td>', $row['ip'], '</td>',
+                            '<td>', $row['os'] ?? '-', ' ', $row['x64'], '</td>',
+                            '<td>', Html::tag('span',
+                                    $row['browser'] . ' (' . substr($row['useragent'], 0, 70) . '...)',
+                                    ['title' => $row['useragent']]),
+                            '</td>',
+                        '</tr>';
+                    }
+                ?>
+                </tbody>
+            </table>
+            <?php
+                $pjaxId = 'nginx-pjax-' . $pages->page;
+                $pjax = Pjax::begin([
+                    'id' => $pjaxId,
+                    'linkSelector' => '#' . $pjaxId . ' a[data-page]',
+                    'options' => ['class' => 'pages-nav', "data-pjax-container" => 2],
+                    'timeout' => 5000
+                ]);
 
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
-                    dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-                    ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                    fugiat nulla pariatur.</p>
-
-                <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/forum/">Yii Forum &raquo;</a></p>
-            </div>
-            <div class="col-lg-4">
-                <h2>Heading</h2>
-
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
-                    dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-                    ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                    fugiat nulla pariatur.</p>
-
-                <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/extensions/">Yii Extensions &raquo;</a></p>
-            </div>
+                echo
+                    LinkPager::widget([
+                        'pagination' => $pages,
+                        'maxButtonCount' => 8,
+                        'nextPageLabel' => 'Вперед ›',
+                        'prevPageLabel' => '‹ Назад',
+                ]);
+                Pjax::end();
+            ?>
         </div>
-
     </div>
 </div>
